@@ -277,22 +277,44 @@ const renderFarmEntries = (data) => {
   return ordered.map((entry) => renderFarmEntry(entry)).join('');
 };
 
+// パスを正規化する（Windows ローカルパスを検出して相対パスに変換）
+const normalizeFarmPhotoPath = (src) => {
+  if (!src || typeof src !== 'string') return null;
+  
+  // Windows ローカルパスを検出（C:\ または ..\ を含む場合）
+  if (src.includes(':') || src.includes('\\')) {
+    // ファイル名のみを抽出（最後の \ または / の後ろ）
+    const fileName = src.split(/[\\\/]/).pop();
+    if (fileName) {
+      // assets/images/farm/ 配下の相対パスに変換
+      return `assets/images/farm/${fileName}`;
+    }
+    console.warn('Farm photo path contains local path but no filename found:', src);
+    return null;
+  }
+  
+  // すでに相対パスの場合はそのまま返す
+  return src;
+};
+
 const mapSupabaseRowsToFarmData = (rows) => {
   const safeRows = Array.isArray(rows) ? rows : [];
   const entries = safeRows.map((row) => {
     const photos = [];
 
-    if (row.photo1_src) {
+    const photo1Src = normalizeFarmPhotoPath(row.photo1_src);
+    if (photo1Src) {
       photos.push({
-        src: row.photo1_src,
+        src: photo1Src,
         alt: row.photo1_alt || row.title,
         caption: row.photo1_caption || ''
       });
     }
 
-    if (row.photo2_src) {
+    const photo2Src = normalizeFarmPhotoPath(row.photo2_src);
+    if (photo2Src) {
       photos.push({
-        src: row.photo2_src,
+        src: photo2Src,
         alt: row.photo2_alt || row.title,
         caption: row.photo2_caption || ''
       });

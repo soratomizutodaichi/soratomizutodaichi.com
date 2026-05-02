@@ -224,18 +224,48 @@
       renderList();
     }
 
+    // ---- 画像パスの検証 ----
+    const validatePhotoPath = (path) => {
+      if (!path) return { valid: true, message: '' };
+      // Windows ローカルパスを検出（C:\ や ..\ を含む）
+      if (path.includes(':') || path.includes('\\')) {
+        const fileName = path.split(/[\\\/]/).pop();
+        return {
+          valid: false,
+          message: `画像パスにローカルパスが含まれています。ファイル名「${escapeHtml(fileName)}」だけを使用するか、相対パス「assets/images/farm/${fileName}」を使用してください。`,
+          suggestion: `assets/images/farm/${fileName}`
+        };
+      }
+      return { valid: true, message: '' };
+    };
+
     // ---- フォーム送信（保存） ----
     document.getElementById('farm-form').addEventListener('submit', async e => {
       e.preventDefault();
+      
+      // 画像パスの検証
+      const photo1Src = document.getElementById('farm-photo1-src').value.trim();
+      const photo2Src = document.getElementById('farm-photo2-src').value.trim();
+      const validation1 = validatePhotoPath(photo1Src);
+      const validation2 = validatePhotoPath(photo2Src);
+      
+      if (!validation1.valid || !validation2.valid) {
+        const messages = [];
+        if (!validation1.valid) messages.push(`写真1: ${validation1.message}`);
+        if (!validation2.valid) messages.push(`写真2: ${validation2.message}`);
+        showMsg(formMsg, messages.join('\n'), 'error');
+        return;
+      }
+      
       const data = {
         sort_order:     parseInt(document.getElementById('farm-sort-order').value, 10) || 10,
         date_label:     document.getElementById('farm-date-label').value.trim(),
         title:          document.getElementById('farm-title').value.trim(),
         description:    document.getElementById('farm-description').value.trim(),
-        photo1_src:     document.getElementById('farm-photo1-src').value.trim() || null,
+        photo1_src:     photo1Src || null,
         photo1_alt:     document.getElementById('farm-photo1-alt').value.trim() || null,
         photo1_caption: document.getElementById('farm-photo1-caption').value.trim() || null,
-        photo2_src:     document.getElementById('farm-photo2-src').value.trim() || null,
+        photo2_src:     photo2Src || null,
         photo2_alt:     document.getElementById('farm-photo2-alt').value.trim() || null,
         photo2_caption: document.getElementById('farm-photo2-caption').value.trim() || null,
         published:      document.getElementById('farm-published').checked
