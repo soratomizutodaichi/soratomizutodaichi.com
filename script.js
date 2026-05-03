@@ -273,12 +273,9 @@ const renderFarmEntry = (entry) => {
 
 const renderFarmEntries = (data) => {
   const entries = Array.isArray(data.entries) ? data.entries : [];
-  const ordered = entries.slice().sort((a, b) => {
-    // sortOrder が同じか未設定の場合は dateLabel の降順（新しい順）
-    const so = (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999);
-    if (so !== 0) return so;
-    return (b.dateLabel || '').localeCompare(a.dateLabel || '');
-  });
+  const ordered = entries.slice().sort((a, b) =>
+    (b.dateLabel || '').localeCompare(a.dateLabel || '')
+  );
   return ordered.map((entry) => renderFarmEntry(entry)).join('');
 };
 
