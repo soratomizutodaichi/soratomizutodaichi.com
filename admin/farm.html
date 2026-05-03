@@ -94,7 +94,11 @@
                 <div class="form-section__title">📷 写真1</div>
                 <div class="form-group">
                   <label for="farm-photo1-src">画像パス</label>
-                  <input type="text" id="farm-photo1-src" placeholder="例：assets/images/farm/hana.png">
+                  <div class="path-picker">
+                    <input type="text" id="farm-photo1-src" placeholder="例：assets/images/farm/hana.png">
+                    <button type="button" class="btn btn--secondary btn--sm" id="btn-farm-photo1-pick">エクスプローラー</button>
+                  </div>
+                  <input type="file" id="farm-photo1-file" accept="image/*" hidden>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
@@ -112,7 +116,11 @@
                 <div class="form-section__title">📷 写真2</div>
                 <div class="form-group">
                   <label for="farm-photo2-src">画像パス</label>
-                  <input type="text" id="farm-photo2-src" placeholder="例：assets/images/farm/aosaya.png">
+                  <div class="path-picker">
+                    <input type="text" id="farm-photo2-src" placeholder="例：assets/images/farm/aosaya.png">
+                    <button type="button" class="btn btn--secondary btn--sm" id="btn-farm-photo2-pick">エクスプローラー</button>
+                  </div>
+                  <input type="file" id="farm-photo2-file" accept="image/*" hidden>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
@@ -274,6 +282,28 @@
         input.value = normalizePhotoPath(input.value);
       });
     });
+
+    const bindPathPicker = (buttonId, fileInputId, pathInputId) => {
+      const button = document.getElementById(buttonId);
+      const fileInput = document.getElementById(fileInputId);
+      const pathInput = document.getElementById(pathInputId);
+
+      button.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          return;
+        }
+        pathInput.value = normalizePhotoPath(file.name);
+        fileInput.value = '';
+      });
+    };
+
+    bindPathPicker('btn-farm-photo1-pick', 'farm-photo1-file', 'farm-photo1-src');
+    bindPathPicker('btn-farm-photo2-pick', 'farm-photo2-file', 'farm-photo2-src');
 
     // ---- フォーム送信（保存） ----
     document.getElementById('farm-form').addEventListener('submit', async e => {
