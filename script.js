@@ -390,6 +390,9 @@ const loadFarmFromSupabase = async () => {
   }
 
   const rows = await response.json();
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return false;
+  }
   const mapped = mapSupabaseRowsToFarmData(rows);
   farmLog.innerHTML = renderFarmEntries(mapped);
   return true;
@@ -417,7 +420,10 @@ const loadFarmFromJson = async () => {
     }
 
     const data = await response.json();
-    farmLog.innerHTML = renderFarmEntries(data);
+    const entries = Array.isArray(data.entries) ? data.entries : [];
+    if (entries.length > 0) {
+      farmLog.innerHTML = renderFarmEntries(data);
+    }
   } catch (error) {
     console.warn('Farm data could not be loaded. Keeping static HTML fallback.', error);
   }
