@@ -262,7 +262,7 @@ const renderFarmEntry = (entry) => {
       <div class="farm-entry__media-grid">
         ${photos.map((photo) => `
           <figure class="farm-media-card">
-            <img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt)}">
+            <img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.alt)}" loading="lazy" decoding="async" onerror="this.onerror=null; this.closest('figure').style.display='none';">
             <figcaption>${escapeHtml(photo.caption)}</figcaption>
           </figure>
         `).join('')}
@@ -277,24 +277,40 @@ const renderFarmEntries = (data) => {
   return ordered.map((entry) => renderFarmEntry(entry)).join('');
 };
 
-// パスを正規化する（Windows ローカルパスを検出して相対パスに変換）
+// パスを正規化する（ローカルファイルパスは無効として除外）
 const normalizeFarmPhotoPath = (src) => {
   if (!src || typeof src !== 'string') return null;
-  
-  // Windows ローカルパスを検出（C:\ または ..\ を含む場合）
-  if (src.includes(':') || src.includes('\\')) {
-    // ファイル名のみを抽出（最後の \ または / の後ろ）
-    const fileName = src.split(/[\\\/]/).pop();
-    if (fileName) {
-      // assets/images/farm/ 配下の相対パスに変換
-      return `assets/images/farm/${fileName}`;
-    }
-    console.warn('Farm photo path contains local path but no filename found:', src);
+  const trimmed = src.trim();
+
+  if (!trimmed) {
     return null;
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('./assets/images/farm/')) {
+    return trimmed.replace('./', '');
+  }
+
+  if (trimmed.startsWith('assets/images/farm/') || trimmed.startsWith('/assets/images/farm/')) {
+    return trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
+  }
+  
+  // Windows ローカルパスやバックスラッシュを含む値は公開ページでは無効
+  if (trimmed.includes(':') || trimmed.includes('\\')) {
+    console.warn('Farm photo path is a local path and was ignored:', trimmed);
+    return null;
+  }
+
+  // ファイル名のみが入っている場合は farm 配下に補完
+  if (!trimmed.includes('/')) {
+    return `assets/images/farm/${trimmed}`;
   }
   
   // すでに相対パスの場合はそのまま返す
-  return src;
+  return trimmed;
 };
 
 const mapSupabaseRowsToFarmData = (rows) => {
