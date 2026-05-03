@@ -273,7 +273,12 @@ const renderFarmEntry = (entry) => {
 
 const renderFarmEntries = (data) => {
   const entries = Array.isArray(data.entries) ? data.entries : [];
-  const ordered = entries.slice().sort((a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999));
+  const ordered = entries.slice().sort((a, b) => {
+    // sortOrder が同じか未設定の場合は dateLabel の降順（新しい順）
+    const so = (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999);
+    if (so !== 0) return so;
+    return (b.dateLabel || '').localeCompare(a.dateLabel || '');
+  });
   return ordered.map((entry) => renderFarmEntry(entry)).join('');
 };
 
@@ -350,19 +355,19 @@ const mapSupabaseRowsToFarmData = (rows) => {
 
 const loadFarmFromSupabase = async () => {
   if (!farmLog) {
-    return false;
+    return null;
   }
 
   const config = window.SUPABASE_CONFIG;
   if (!config || !config.enabled) {
-    return false;
+    return null;
   }
 
   const table = farmLog.dataset.farmTable || config.farmTable || 'farm_updates';
 
   if (!config.url || !config.anonKey || !table) {
     console.warn('Supabase config is incomplete for farm data.');
-    return false;
+    return null;
   }
 
   const cols = [
@@ -391,11 +396,9 @@ const loadFarmFromSupabase = async () => {
 
   const rows = await response.json();
   if (!Array.isArray(rows) || rows.length === 0) {
-    return false;
+    return null;
   }
-  const mapped = mapSupabaseRowsToFarmData(rows);
-  farmLog.innerHTML = renderFarmEntries(mapped);
-  return true;
+  return mapSupabaseRowsToFarmData(rows).entries;
 };
 
 const loadFarmFromJson = async () => {
@@ -409,20 +412,28 @@ const loadFarmFromJson = async () => {
   }
 
   try {
-    const loadedFromSupabase = await loadFarmFromSupabase();
-    if (loadedFromSupabase) {
-      return;
-    }
+    // Supabase と JSON を両方ロードしてマージ（dateLabel をキーに重複除去、Supabase 優先）
+    const [supabaseEntries, jsonData] = await Promise.allSettled([
+      loadFarmFromSupabase(),
+      fetch(source, { cache: 'no-store' }).then((r) => r.ok ? r.json() : Promise.reject(r.status))
+    ]);
 
-    const response = await fetch(source, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Failed to load farm data JSON: ${response.status}`);
-    }
+    const fromSupabase = supabaseEntries.status === 'fulfilled' && Array.isArray(supabaseEntries.value)
+      ? supabaseEntries.value : [];
+    const fromJson = jsonData.status === 'fulfilled' && Array.isArray(jsonData.value?.entries)
+      ? jsonData.value.entries : [];
 
-    const data = await response.json();
-    const entries = Array.isArray(data.entries) ? data.entries : [];
-    if (entries.length > 0) {
-      farmLog.innerHTML = renderFarmEntries(data);
+    // Supabase の dateLabel セットを作成（重複除去用）
+    const supabaseDates = new Set(fromSupabase.map((e) => e.dateLabel));
+
+    // JSON のエントリのうち Supabase にない日付のものを追加
+    const merged = [
+      ...fromSupabase,
+      ...fromJson.filter((e) => !supabaseDates.has(e.dateLabel))
+    ];
+
+    if (merged.length > 0) {
+      farmLog.innerHTML = renderFarmEntries({ entries: merged });
     }
   } catch (error) {
     console.warn('Farm data could not be loaded. Keeping static HTML fallback.', error);
