@@ -163,7 +163,7 @@
       listLoading.style.display = 'block';
       listEl.innerHTML = '';
       try {
-        records = await fetchRecords(TABLE, 'sort_order.asc,id.asc');
+        records = await fetchRecords(TABLE, 'date_label.desc,id.desc');
         renderList();
       } catch(e) {
         showMsg(listMsg, '読み込みエラー: ' + e.message, 'error');
