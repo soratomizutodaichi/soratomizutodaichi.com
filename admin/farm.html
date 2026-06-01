@@ -94,7 +94,11 @@
                 <div class="form-section__title">📷 写真1</div>
                 <div class="form-group">
                   <label for="farm-photo1-src">画像パス</label>
-                  <input type="text" id="farm-photo1-src" placeholder="例：assets/images/farm/hana.png">
+                  <div class="path-picker">
+                    <input type="text" id="farm-photo1-src" placeholder="例：assets/images/farm/hana.png">
+                    <button type="button" class="btn btn--secondary btn--sm" id="btn-farm-photo1-pick">エクスプローラー</button>
+                  </div>
+                  <input type="file" id="farm-photo1-file" accept="image/*" hidden>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
@@ -112,7 +116,11 @@
                 <div class="form-section__title">📷 写真2</div>
                 <div class="form-group">
                   <label for="farm-photo2-src">画像パス</label>
-                  <input type="text" id="farm-photo2-src" placeholder="例：assets/images/farm/aosaya.png">
+                  <div class="path-picker">
+                    <input type="text" id="farm-photo2-src" placeholder="例：assets/images/farm/aosaya.png">
+                    <button type="button" class="btn btn--secondary btn--sm" id="btn-farm-photo2-pick">エクスプローラー</button>
+                  </div>
+                  <input type="file" id="farm-photo2-file" accept="image/*" hidden>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
@@ -163,7 +171,7 @@
       listLoading.style.display = 'block';
       listEl.innerHTML = '';
       try {
-        records = await fetchRecords(TABLE, 'sort_order.asc,id.asc');
+        records = await fetchRecords(TABLE, 'date_label.desc,id.desc');
         renderList();
       } catch(e) {
         showMsg(listMsg, '読み込みエラー: ' + e.message, 'error');
@@ -224,18 +232,110 @@
       renderList();
     }
 
+    // ---- 画像パスの補完と検証 ----
+    const FARM_IMAGE_BASE = 'assets/images/farm/';
+
+    const normalizePhotoPath = (path) => {
+      if (!path) return '';
+
+      const trimmed = path.trim();
+      if (!trimmed) return '';
+
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return trimmed;
+      }
+
+      if (trimmed.startsWith(`/${FARM_IMAGE_BASE}`)) {
+        return trimmed.slice(1);
+      }
+
+      if (trimmed.startsWith(FARM_IMAGE_BASE)) {
+        return trimmed;
+      }
+
+      const fileName = trimmed.split(/[\\\/]/).pop();
+      if (!fileName) {
+        return trimmed;
+      }
+
+      if (trimmed.includes(':') || trimmed.includes('\\') || !trimmed.includes('/')) {
+        return `${FARM_IMAGE_BASE}${fileName}`;
+      }
+
+      return trimmed;
+    };
+
+    const validatePhotoPath = (path) => {
+      if (!path) return { valid: true, message: '' };
+      if (path.includes(':') || path.includes('\\')) {
+        return {
+          valid: false,
+          message: '画像パスにローカルパスが残っています。assets/images/farm/ から始まる相対パスか URL を使用してください。'
+        };
+      }
+      return { valid: true, message: '' };
+    };
+
+    ['farm-photo1-src', 'farm-photo2-src'].forEach((id) => {
+      const input = document.getElementById(id);
+      input.addEventListener('blur', () => {
+        input.value = normalizePhotoPath(input.value);
+      });
+    });
+
+    const bindPathPicker = (buttonId, fileInputId, pathInputId) => {
+      const button = document.getElementById(buttonId);
+      const fileInput = document.getElementById(fileInputId);
+      const pathInput = document.getElementById(pathInputId);
+
+      button.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          return;
+        }
+        pathInput.value = normalizePhotoPath(file.name);
+        fileInput.value = '';
+      });
+    };
+
+    bindPathPicker('btn-farm-photo1-pick', 'farm-photo1-file', 'farm-photo1-src');
+    bindPathPicker('btn-farm-photo2-pick', 'farm-photo2-file', 'farm-photo2-src');
+
     // ---- フォーム送信（保存） ----
     document.getElementById('farm-form').addEventListener('submit', async e => {
       e.preventDefault();
+      
+      // 画像パスの検証
+      const photo1Input = document.getElementById('farm-photo1-src');
+      const photo2Input = document.getElementById('farm-photo2-src');
+      const photo1Src = normalizePhotoPath(photo1Input.value);
+      const photo2Src = normalizePhotoPath(photo2Input.value);
+      photo1Input.value = photo1Src;
+      photo2Input.value = photo2Src;
+      const validation1 = validatePhotoPath(photo1Src);
+      const validation2 = validatePhotoPath(photo2Src);
+      
+      if (!validation1.valid || !validation2.valid) {
+        const messages = [];
+        if (!validation1.valid) messages.push(`写真1: ${validation1.message}`);
+        if (!validation2.valid) messages.push(`写真2: ${validation2.message}`);
+        showMsg(formMsg, messages.join('\n'), 'error');
+        return;
+      }
+      
       const data = {
         sort_order:     parseInt(document.getElementById('farm-sort-order').value, 10) || 10,
         date_label:     document.getElementById('farm-date-label').value.trim(),
         title:          document.getElementById('farm-title').value.trim(),
         description:    document.getElementById('farm-description').value.trim(),
-        photo1_src:     document.getElementById('farm-photo1-src').value.trim() || null,
+        photo1_src:     photo1Src || null,
         photo1_alt:     document.getElementById('farm-photo1-alt').value.trim() || null,
         photo1_caption: document.getElementById('farm-photo1-caption').value.trim() || null,
-        photo2_src:     document.getElementById('farm-photo2-src').value.trim() || null,
+        photo2_src:     photo2Src || null,
         photo2_alt:     document.getElementById('farm-photo2-alt').value.trim() || null,
         photo2_caption: document.getElementById('farm-photo2-caption').value.trim() || null,
         published:      document.getElementById('farm-published').checked
