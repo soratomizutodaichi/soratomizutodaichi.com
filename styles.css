@@ -381,12 +381,14 @@ button {
 }
 
 .market-cta__inner {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
 }
 
 .market-button {
+  flex: 0 1 360px;
   min-height: 58px;
   display: inline-flex;
   align-items: center;
@@ -648,6 +650,17 @@ button {
   margin-inline: auto;
 }
 
+.lineup-title {
+  line-height: 0.78;
+}
+
+.lineup-subtitle {
+  display: block;
+  font-size: 0.5em;
+  line-height: 1;
+  margin-top: -0.18em;
+}
+
 .feature-cards,
 .story-grid,
 .faq-grid {
@@ -759,6 +772,65 @@ button {
 
 .story-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.story-grid--lineup-top,
+.story-grid--lineup-bottom {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.story-grid--lineup-top .story-card--top {
+  grid-column: 1 / -1;
+  width: min(100%, calc((100% - 20px) / 2));
+  margin-inline: auto;
+}
+
+.lineup-campaign {
+  margin: 16px auto 24px;
+  padding: 18px 20px 16px;
+  border: 2px solid rgba(184, 78, 35, 0.42);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(255, 227, 201, 0.98), rgba(255, 248, 236, 1));
+  box-shadow: 0 14px 28px rgba(169, 93, 45, 0.24);
+  text-align: center;
+  position: relative;
+}
+
+.lineup-campaign::before {
+  content: "期間限定";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #b44324;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.lineup-campaign p {
+  margin: 0;
+  color: #553724;
+}
+
+.lineup-campaign__title {
+  font-weight: 800;
+  font-size: 1.14rem;
+  color: #9a3110;
+  letter-spacing: 0.02em;
+}
+
+.lineup-campaign p + p {
+  margin-top: 8px;
+}
+
+.lineup-campaign__accent {
+  font-weight: 800;
+  color: #7a2d11;
 }
 
 .research-stack {
@@ -1383,6 +1455,16 @@ mark.qa-highlight {
   padding-right: 20px;
 }
 
+.story-card p.story-card__price {
+  display: block;
+  width: 100%;
+  margin: 0 0 20px;
+  padding-left: 0;
+  padding-right: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
 .story-note {
   margin-top: 26px;
   padding: 24px 28px;
@@ -1535,8 +1617,8 @@ mark.qa-highlight {
     border-right: 0;
   }
 
-  .market-cta__inner {
-    grid-template-columns: 1fr;
+  .market-button {
+    flex-basis: min(100%, 420px);
   }
 
   .feature-cards,
@@ -1553,6 +1635,15 @@ mark.qa-highlight {
   .benefit-layout,
   .closing {
     grid-template-columns: 1fr;
+  }
+
+  .story-grid--lineup-top .story-card--top {
+    width: 100%;
+  }
+
+  .lineup-campaign {
+    margin: 16px 0 20px;
+    padding: 18px 14px 14px;
   }
 
   .research-card--wide {
