@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ページが見つかりません | 空と水と大地合同会社</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // 間違ったURLを正しいURLへリダイレクト
+    const redirectMap = {
+      '/Products': '/product.html',
+      '/products': '/product.html',
+      '/home': '/',
+      '/hojyo': '/',
+      '/naLogImpressions': '/'
+    };
+    const path = window.location.pathname;
+    const dest = redirectMap[path];
+    if (dest) {
+      window.location.replace(dest);
+    }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-brand">
+      <a href="/" class="site-brand__link">
+        <img class="site-brand__logo" src="assets/images/home/smdimg.png" alt="" aria-hidden="true">
+        <span class="site-brand__name">空と水と大地</span>
+      </a>
+    </div>
+  </header>
+
+  <main style="text-align:center; padding: 80px 20px;">
+    <h1 style="font-size:1.5rem; margin-bottom:1rem;">ページが見つかりませんでした</h1>
+    <p style="margin-bottom:2rem;">お探しのページは移動または削除された可能性があります。</p>
+    <a href="/" style="display:inline-block; padding:12px 32px; background:#2d6a4f; color:#fff; border-radius:4px; text-decoration:none;">トップページへ戻る</a>
+    <div style="margin-top:3rem;">
+      <p style="margin-bottom:1rem; color:#555;">よく見られているページ：</p>
+      <ul style="list-style:none; padding:0; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+        <li><a href="/product.html">商品一覧</a></li>
+        <li><a href="/hasshoumame.html">八升豆について</a></li>
+        <li><a href="/farm.html">農場紹介</a></li>
+        <li><a href="/qa.html">よくある質問</a></li>
+      </ul>
+    </div>
+  </main>
+
+  <footer class="site-footer" style="margin-top:auto; padding:24px; text-align:center; color:#777; font-size:0.85rem;">
+    &copy; <span id="current-year"></span> 空と水と大地合同会社
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
