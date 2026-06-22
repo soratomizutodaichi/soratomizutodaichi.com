@@ -1590,7 +1590,131 @@ mark.qa-highlight {
   font-size: 0.88rem;
 }
 
+.consent-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.consent-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.consent-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 56, 38, 0.5);
+}
+
+.consent-modal__dialog {
+  position: relative;
+  width: min(640px, calc(100% - 24px));
+  padding: 34px 34px 30px;
+  border-radius: 12px;
+  border: 1px solid rgba(32, 77, 54, 0.2);
+  background: #fffaf1;
+  box-shadow: 0 24px 60px rgba(18, 56, 38, 0.22);
+}
+
+.consent-modal__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.consent-modal__brand-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 28% 30%, #59b87c 0 20%, transparent 21%),
+    radial-gradient(circle at 70% 30%, #3c9b60 0 19%, transparent 20%),
+    radial-gradient(circle at 35% 70%, #2f8551 0 20%, transparent 21%),
+    radial-gradient(circle at 70% 70%, #1f6f42 0 20%, transparent 21%),
+    radial-gradient(circle at center, #1a6b3c 0 62%, #dce8d9 63% 100%);
+}
+
+.consent-modal__brand-name {
+  margin: 0;
+  line-height: 1.45;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.consent-modal h2 {
+  margin: 0 0 14px;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.45rem);
+  color: var(--accent-deep);
+}
+
+.consent-modal p {
+  margin: 0;
+  color: #2a2f2a;
+  line-height: 1.95;
+}
+
+.consent-modal__actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.consent-modal__btn {
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid #1c221d;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.consent-modal__btn:hover,
+.consent-modal__btn:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(16, 21, 17, 0.16);
+}
+
+.consent-modal__btn--agree {
+  min-width: 152px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.consent-modal__btn--decline {
+  min-width: 164px;
+  border-color: rgba(32, 77, 54, 0.4);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-deep);
+}
+
+body.consent-modal-open {
+  overflow: hidden;
+}
+
 @media (max-width: 960px) {
+  .consent-modal__dialog {
+    padding: 28px 20px 22px;
+  }
+
+  .consent-modal__actions {
+    flex-direction: column;
+  }
+
+  .consent-modal__btn {
+    width: 100%;
+  }
+
   .research-intro-tile {
     padding: 42px 22px 46px;
   }

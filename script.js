@@ -21,6 +21,127 @@ if (yearTarget) {
   yearTarget.textContent = new Date().getFullYear();
 }
 
+const isResearchLink = (href) => {
+  if (!href || href.startsWith('#')) {
+    return false;
+  }
+
+  try {
+    const url = new URL(href, window.location.href);
+    return url.pathname.endsWith('/research.html');
+  } catch (error) {
+    return false;
+  }
+};
+
+const ensureConsentModal = () => {
+  const existing = document.querySelector('#research-consent-modal');
+  if (existing) {
+    return existing;
+  }
+
+  const hasResearchLinks = Array.from(document.querySelectorAll('a[href]'))
+    .some((link) => isResearchLink(link.getAttribute('href')));
+
+  if (!hasResearchLinks || !document.body) {
+    return null;
+  }
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="consent-modal" id="research-consent-modal" aria-hidden="true">
+      <div class="consent-modal__backdrop" data-consent-close></div>
+      <section class="consent-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="research-consent-title" aria-describedby="research-consent-text">
+        <div class="consent-modal__brand">
+          <span class="consent-modal__brand-mark" aria-hidden="true"></span>
+          <p class="consent-modal__brand-name">空と水と大地合同会社</p>
+        </div>
+        <h2 id="research-consent-title">研究情報ページの閲覧について</h2>
+        <p id="research-consent-text">
+          こちらのページに掲載している情報および資料は、消費者の方向けではありません。
+          医療関係者・健康食品・化粧品に関わる技術者・メーカー関係者等専用ページとなります。
+          ページ内の情報は製品自体の効果効能をうたうものではございませんので、同意された方のみご覧ください。
+        </p>
+        <div class="consent-modal__actions">
+          <button class="consent-modal__btn consent-modal__btn--agree" type="button" id="research-consent-agree">同意する</button>
+          <button class="consent-modal__btn consent-modal__btn--decline" type="button" id="research-consent-decline">同意しない</button>
+        </div>
+      </section>
+    </div>
+  `);
+
+  return document.querySelector('#research-consent-modal');
+};
+
+const consentModal = ensureConsentModal();
+
+if (consentModal) {
+  const agreeButton = consentModal.querySelector('#research-consent-agree');
+  const declineButton = consentModal.querySelector('#research-consent-decline');
+  const closeTargets = consentModal.querySelectorAll('[data-consent-close]');
+  const researchLinks = Array.from(document.querySelectorAll('a[href]'))
+    .filter((link) => isResearchLink(link.getAttribute('href')));
+  let pendingResearchUrl = null;
+
+  const closeModal = () => {
+    consentModal.classList.remove('is-open');
+    consentModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('consent-modal-open');
+    pendingResearchUrl = null;
+  };
+
+  const openModal = (url) => {
+    pendingResearchUrl = url;
+    consentModal.classList.add('is-open');
+    consentModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('consent-modal-open');
+    if (agreeButton) {
+      agreeButton.focus();
+    }
+  };
+
+  researchLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.button !== 0) {
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      event.preventDefault();
+      openModal(link.href);
+    });
+  });
+
+  closeTargets.forEach((target) => {
+    target.addEventListener('click', closeModal);
+  });
+
+  if (declineButton) {
+    declineButton.addEventListener('click', closeModal);
+  }
+
+  if (agreeButton) {
+    agreeButton.addEventListener('click', () => {
+      if (!pendingResearchUrl) {
+        closeModal();
+        return;
+      }
+
+      const nextUrl = pendingResearchUrl;
+      closeModal();
+      window.location.href = nextUrl;
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && consentModal.classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+}
+
 const heroSection = document.querySelector('.hero');
 
 if (heroSection) {

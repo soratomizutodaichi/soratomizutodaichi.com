@@ -265,6 +265,26 @@
     </div>
   </footer>
 
+  <div class="consent-modal" id="research-consent-modal" aria-hidden="true">
+    <div class="consent-modal__backdrop" data-consent-close></div>
+    <section class="consent-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="research-consent-title" aria-describedby="research-consent-text">
+      <div class="consent-modal__brand">
+        <span class="consent-modal__brand-mark" aria-hidden="true"></span>
+        <p class="consent-modal__brand-name">空と水と大地合同会社</p>
+      </div>
+      <h2 id="research-consent-title">研究情報ページの閲覧について</h2>
+      <p id="research-consent-text">
+        こちらのページに掲載している情報および資料は、消費者の方向けではありません。
+        医療関係者・健康食品・化粧品に関わる技術者・メーカー関係者等専用ページとなります。
+        ページ内の情報は製品自体の効果効能をうたうものではございませんので、同意された方のみご覧ください。
+      </p>
+      <div class="consent-modal__actions">
+        <button class="consent-modal__btn consent-modal__btn--agree" type="button" id="research-consent-agree">同意する</button>
+        <button class="consent-modal__btn consent-modal__btn--decline" type="button" id="research-consent-decline">同意しない</button>
+      </div>
+    </section>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
