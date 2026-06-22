@@ -74,6 +74,13 @@ a {
   text-decoration: none;
 }
 
+a[href="research.html"],
+a[href="./research.html"],
+a[href="/research.html"],
+a[href="https://soratomizutodaichi.com/research.html"] {
+  display: none !important;
+}
+
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid rgba(32, 77, 54, 0.42);
