@@ -46,6 +46,9 @@
       <a href="qa-logs.html">
         <span class="nav-icon">🔎</span> Q&amp;A検索ログ
       </a>
+      <a href="contacts.html">
+        <span class="nav-icon">📨</span> お問い合わせ
+      </a>
     </nav>
   </aside>
 
@@ -109,6 +112,14 @@
           <div class="dashboard-card__arrow">ログを確認する →</div>
         </a>
 
+        <a class="dashboard-card" href="contacts.html">
+          <div class="dashboard-card__icon">📨</div>
+          <div class="dashboard-card__title">お問い合わせ</div>
+          <div class="dashboard-card__meta" id="contacts-summary" aria-live="polite">未対応件数を集計中...</div>
+          <div class="dashboard-card__desc">お問い合わせフォームから届いた内容と対応状況を確認します。</div>
+          <div class="dashboard-card__arrow">お問い合わせを確認する →</div>
+        </a>
+
       </div>
     </div>
   </main>
@@ -146,7 +157,38 @@
       }
     }
 
+    async function loadContactsSummary() {
+      const summaryEl = document.getElementById('contacts-summary');
+      if (!summaryEl) return;
+
+      try {
+        const records = await fetchRecords('contacts', 'status.desc,created_at.desc,id.desc');
+        const safeRecords = Array.isArray(records) ? records : [];
+        const pendingCount = safeRecords.filter((record) => record.status !== 'done').length;
+        const totalCount = safeRecords.length;
+
+        if (!totalCount) {
+          summaryEl.textContent = 'お問い合わせはまだありません';
+          summaryEl.className = 'dashboard-card__meta dashboard-card__meta--neutral';
+          return;
+        }
+
+        if (!pendingCount) {
+          summaryEl.textContent = `全${totalCount}件を対応済み`;
+          summaryEl.className = 'dashboard-card__meta dashboard-card__meta--ok';
+          return;
+        }
+
+        summaryEl.textContent = `未対応 ${pendingCount}件 / 全${totalCount}件`;
+        summaryEl.className = 'dashboard-card__meta dashboard-card__meta--warn';
+      } catch (_) {
+        summaryEl.textContent = '件数を取得できませんでした';
+        summaryEl.className = 'dashboard-card__meta dashboard-card__meta--neutral';
+      }
+    }
+
     window.adminAuthReady.then(loadQaLogsSummary);
+    window.adminAuthReady.then(loadContactsSummary);
   </script>
 
 </body>

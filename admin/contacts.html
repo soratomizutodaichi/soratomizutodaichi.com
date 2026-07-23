@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>お問い合わせ 管理 | 空と水と大地合同会社</title>
+  <link rel="icon" href="../assets/images/home/smdimg.png" type="image/png">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <header class="admin-header">
+    <a class="admin-header__logo" href="dashboard.html">
+      ⚙ 管理者画面
+      <span>空と水と大地合同会社</span>
+    </a>
+    <div class="admin-header__spacer"></div>
+    <a class="admin-header__site-link" href="../contact.html" target="_blank">← お問い合わせページを表示</a>
+  </header>
+
+  <aside class="admin-sidebar">
+    <nav class="admin-nav">
+      <p class="admin-nav__label">メニュー</p>
+      <a href="dashboard.html"><span class="nav-icon">🏠</span> ダッシュボード</a>
+      <p class="admin-nav__label">データ管理</p>
+      <a href="farm.html"><span class="nav-icon">🌿</span> 圃場情報</a>
+      <a href="research.html"><span class="nav-icon">🔬</span> 研究情報</a>
+      <a href="enjoy.html"><span class="nav-icon">🍵</span> 楽しみ方</a>
+      <a href="product.html"><span class="nav-icon">📦</span> 商品</a>
+      <a href="qa-items.html"><span class="nav-icon">❓</span> Q&amp;A管理</a>
+      <a href="qa-logs.html"><span class="nav-icon">🔎</span> Q&amp;A検索ログ</a>
+      <a href="contacts.html" class="active"><span class="nav-icon">📨</span> お問い合わせ</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-content">
+      <div class="dev-banner">
+        ⚠️ <strong>開発モード：</strong>認証は現在無効化されています。本番公開前に認証機能を有効化してください。
+      </div>
+
+      <div class="admin-page-title">
+        <h1>📨 お問い合わせ</h1>
+        <p>お問い合わせフォームから届いた内容を確認し、対応状況を管理します</p>
+      </div>
+
+      <div class="admin-layout">
+        <div class="admin-panel">
+          <div class="admin-panel__head">
+            <h2>お問い合わせ一覧</h2>
+          </div>
+          <div class="admin-panel__body">
+            <div id="contacts-list-msg" class="msg"></div>
+            <div id="contacts-list-loading" class="loading-indicator">読み込み中...</div>
+            <ul class="record-list" id="contacts-list"></ul>
+          </div>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel__head">
+            <h2 id="contacts-detail-title">お問い合わせ詳細</h2>
+          </div>
+          <div class="admin-panel__body">
+            <div id="contacts-detail-msg" class="msg"></div>
+            <div class="admin-detail" id="contacts-empty-state">
+              <p class="record-list__empty">左の一覧からお問い合わせを選択してください</p>
+            </div>
+            <form class="admin-form" id="contacts-form" novalidate hidden>
+              <input type="hidden" id="contacts-id">
+
+              <div class="admin-detail">
+                <div class="form-row">
+                  <div class="admin-detail__row">
+                    <div class="admin-detail__label">お名前</div>
+                    <div class="admin-detail__value" id="contacts-name"></div>
+                  </div>
+                  <div class="admin-detail__row">
+                    <div class="admin-detail__label">種別</div>
+                    <div class="admin-detail__value" id="contacts-category"></div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="admin-detail__row">
+                    <div class="admin-detail__label">メールアドレス</div>
+                    <div class="admin-detail__value" id="contacts-email"></div>
+                  </div>
+                  <div class="admin-detail__row">
+                    <div class="admin-detail__label">電話番号</div>
+                    <div class="admin-detail__value" id="contacts-phone"></div>
+                  </div>
+                </div>
+
+                <div class="admin-detail__row">
+                  <div class="admin-detail__label">受信日時</div>
+                  <div class="admin-detail__value admin-detail__value--mono" id="contacts-created-at"></div>
+                </div>
+
+                <div class="admin-detail__row">
+                  <div class="admin-detail__label">お問い合わせ内容</div>
+                  <div class="admin-detail__value admin-detail__box" id="contacts-message" style="white-space:pre-wrap;"></div>
+                </div>
+
+                <label class="form-toggle form-toggle--compact">
+                  <input type="checkbox" id="contacts-done">
+                  <span>対応済みにする</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary">💾 対応状況を保存</button>
+                <a class="btn btn--ghost" id="contacts-reply" href="#" style="text-decoration:none;">✉ メールで返信</a>
+                <button type="button" class="btn btn--ghost" id="contacts-reset">選択を解除</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../data/supabase-config.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    const TABLE = 'contacts';
+    let records = [];
+    let editingId = null;
+
+    const listEl = document.getElementById('contacts-list');
+    const listMsg = document.getElementById('contacts-list-msg');
+    const listLoading = document.getElementById('contacts-list-loading');
+    const detailMsg = document.getElementById('contacts-detail-msg');
+    const emptyState = document.getElementById('contacts-empty-state');
+    const formEl = document.getElementById('contacts-form');
+    const detailTitle = document.getElementById('contacts-detail-title');
+    const replyLink = document.getElementById('contacts-reply');
+
+    function formatDateTime(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    }
+
+    function isDone(record) {
+      return record.status === 'done';
+    }
+
+    async function loadList() {
+      listLoading.style.display = 'block';
+      listEl.innerHTML = '';
+      try {
+        records = await fetchRecords(TABLE, 'status.desc,created_at.desc,id.desc');
+        renderList();
+      } catch (e) {
+        showMsg(listMsg, '読み込みエラー: ' + e.message, 'error');
+      } finally {
+        listLoading.style.display = 'none';
+      }
+    }
+
+    function renderList() {
+      listEl.innerHTML = '';
+      if (!records.length) {
+        listEl.innerHTML = '<li class="record-list__empty">お問い合わせはありません</li>';
+        return;
+      }
+
+      records.forEach((record) => {
+        const li = document.createElement('li');
+        li.className = 'record-item' + (record.id === editingId ? ' selected' : '');
+        li.dataset.id = record.id;
+        const done = isDone(record);
+        li.innerHTML = `
+          <span class="record-item__title">${escapeHtml(record.name || '（名前なし）')}<span style="color:var(--admin-muted,#888);font-weight:400;"> ／ ${escapeHtml(record.category || '-')}</span></span>
+          <span class="record-item__meta">${escapeHtml(formatDateTime(record.created_at))}</span>
+          <span class="record-item__badge record-item__badge--${done ? 'ok' : 'pending'}">${done ? '対応済み' : '未対応'}</span>
+        `;
+        li.addEventListener('click', () => fillDetail(record));
+        listEl.appendChild(li);
+      });
+    }
+
+    function fillDetail(record) {
+      editingId = record.id;
+      detailTitle.textContent = 'お問い合わせ詳細';
+      emptyState.hidden = true;
+      formEl.hidden = false;
+      document.getElementById('contacts-id').value = record.id;
+      document.getElementById('contacts-name').textContent = record.name || '-';
+      document.getElementById('contacts-category').textContent = record.category || '-';
+      document.getElementById('contacts-email').textContent = record.email || '-';
+      document.getElementById('contacts-phone').textContent = record.phone || '-';
+      document.getElementById('contacts-created-at').textContent = formatDateTime(record.created_at);
+      document.getElementById('contacts-message').textContent = record.message || '-';
+      document.getElementById('contacts-done').checked = isDone(record);
+
+      // メール返信リンク（件名・宛先を安全にエンコード）
+      if (replyLink) {
+        if (record.email) {
+          const subject = encodeURIComponent('【空と水と大地合同会社】お問い合わせありがとうございます');
+          replyLink.href = `mailto:${encodeURIComponent(record.email)}?subject=${subject}`;
+          replyLink.style.display = '';
+        } else {
+          replyLink.style.display = 'none';
+        }
+      }
+
+      renderList();
+    }
+
+    function resetDetail() {
+      editingId = null;
+      detailTitle.textContent = 'お問い合わせ詳細';
+      emptyState.hidden = false;
+      formEl.hidden = true;
+      formEl.reset();
+      renderList();
+    }
+
+    formEl.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!editingId) return;
+      try {
+        const status = document.getElementById('contacts-done').checked ? 'done' : 'new';
+        await updateRecord(TABLE, editingId, { status });
+        const target = records.find((record) => record.id === editingId);
+        if (target) target.status = status;
+        showMsg(detailMsg, '対応状況を更新しました', 'success');
+        renderList();
+      } catch (e) {
+        showMsg(detailMsg, '保存エラー: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('contacts-reset').addEventListener('click', resetDetail);
+
+    window.adminAuthReady.then(loadList);
+  </script>
+
+</body>
+</html>

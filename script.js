@@ -793,3 +793,152 @@ const loadQaData = async () => {
 };
 
 loadQaData();
+
+// ─── お問い合わせフォーム（contact.html） ──────────────────────────────────────
+
+const contactForm = document.querySelector('form[data-contact-form]');
+
+if (contactForm) {
+  const contactAlert = document.querySelector('#contact-alert');
+  const contactSuccess = document.querySelector('#contact-success');
+  const contactSubmit = document.querySelector('#contact-submit');
+  const nameInput = document.querySelector('#contact-name');
+  const emailInput = document.querySelector('#contact-email');
+  const phoneInput = document.querySelector('#contact-phone');
+  const categoryInput = document.querySelector('#contact-category');
+  const messageInput = document.querySelector('#contact-message');
+  const consentInput = document.querySelector('#contact-consent');
+  const honeypotInput = document.querySelector('#contact-website');
+  const messageCount = document.querySelector('#contact-message-count');
+
+  const formLoadedAt = Date.now();
+  const CONTACT_CATEGORIES = ['商品について', 'ご注文・配送について', '取材・メディア', 'その他'];
+
+  // ── 本文の文字数カウンター
+  if (messageInput && messageCount) {
+    const updateCount = () => { messageCount.textContent = String(messageInput.value.length); };
+    messageInput.addEventListener('input', updateCount);
+    updateCount();
+  }
+
+  const showContactAlert = (text) => {
+    if (!contactAlert) return;
+    contactAlert.textContent = text;
+    contactAlert.hidden = false;
+    contactAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const clearContactAlert = () => {
+    if (!contactAlert) return;
+    contactAlert.hidden = true;
+    contactAlert.textContent = '';
+  };
+
+  // ── 簡易メール形式チェック（サーバー側でも別途検証）
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  // ── Supabase へ匿名 INSERT（qa_logs と同じパターン）
+  const submitContact = async (payload) => {
+    const config = window.SUPABASE_CONFIG;
+    if (!config || !config.enabled || !config.url || !config.anonKey) {
+      throw new Error('Supabase config is missing.');
+    }
+
+    const response = await fetch(`${config.url}/rest/v1/contacts`, {
+      method: 'POST',
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new Error(`Contact Supabase responded with ${response.status} ${detail}`);
+    }
+  };
+
+  const showContactSuccess = () => {
+    contactForm.hidden = true;
+    if (contactSuccess) {
+      contactSuccess.hidden = false;
+      contactSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  contactForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    clearContactAlert();
+
+    // ハニーポット：不可視項目に入力があればボットとみなし、静かに成功表示
+    if (honeypotInput && honeypotInput.value.trim() !== '') {
+      showContactSuccess();
+      return;
+    }
+
+    // 送信が速すぎる（3秒未満）はボットの可能性が高い
+    if (Date.now() - formLoadedAt < 3000) {
+      showContactAlert('送信の間隔が短すぎます。数秒おいてから、もう一度お試しください。');
+      return;
+    }
+
+    const name = (nameInput?.value || '').trim();
+    const email = (emailInput?.value || '').trim();
+    const phone = (phoneInput?.value || '').trim();
+    const category = categoryInput?.value || '';
+    const message = (messageInput?.value || '').trim();
+    const consent = !!consentInput?.checked;
+
+    // ── クライアント側バリデーション
+    if (!name || name.length > 100) {
+      showContactAlert('お名前を100文字以内でご入力ください。');
+      return;
+    }
+    if (!email || email.length > 254 || !isValidEmail(email)) {
+      showContactAlert('メールアドレスを正しくご入力ください。');
+      return;
+    }
+    if (phone.length > 30) {
+      showContactAlert('電話番号は30文字以内でご入力ください。');
+      return;
+    }
+    if (!CONTACT_CATEGORIES.includes(category)) {
+      showContactAlert('お問い合わせ種別を選択してください。');
+      return;
+    }
+    if (!message || message.length > 2000) {
+      showContactAlert('お問い合わせ内容を2000文字以内でご入力ください。');
+      return;
+    }
+    if (!consent) {
+      showContactAlert('個人情報の取り扱いに同意のうえ、送信してください。');
+      return;
+    }
+
+    if (contactSubmit) {
+      contactSubmit.disabled = true;
+      contactSubmit.textContent = '送信中...';
+    }
+
+    try {
+      await submitContact({
+        name,
+        email,
+        phone: phone || null,
+        category,
+        message
+      });
+      showContactSuccess();
+    } catch (error) {
+      console.warn('Contact submission failed.', error);
+      showContactAlert('送信に失敗しました。お手数ですが、時間をおいて再度お試しください。');
+      if (contactSubmit) {
+        contactSubmit.disabled = false;
+        contactSubmit.textContent = '送信する';
+      }
+    }
+  });
+}
