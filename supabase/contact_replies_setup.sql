@@ -32,6 +32,7 @@ revoke all on public.contact_replies from authenticated;
 --    authenticated は閲覧のみ。挿入は service role（Edge Function）が
 --    RLS をバイパスして行うため、insert 権限は誰にも付与しない。
 grant select on public.contact_replies to authenticated;
+grant insert on public.contact_replies to service_role;  -- Edge Function（返信送信）が返信を記録するのに使用
 
 -- 5) ポリシー：ログイン管理者の閲覧のみ ----------------------
 drop policy if exists contact_replies_auth_select on public.contact_replies;

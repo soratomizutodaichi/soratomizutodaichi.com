@@ -24,7 +24,7 @@ const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://soratomizutoda
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, prefer",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
 };
@@ -93,7 +93,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     `${SUPABASE_URL}/rest/v1/contacts?id=eq.${encodeURIComponent(String(contactId))}&select=id,name,email`,
     { headers: svc },
   );
-  if (!cRes.ok) return json({ error: "lookup failed" }, 502);
+  if (!cRes.ok) {
+    const detail = await cRes.text().catch(() => "");
+    return json({ error: `lookup failed (${cRes.status}): ${detail.slice(0, 300)}` }, 502);
+  }
   const rows = await cRes.json().catch(() => []);
   const contact = Array.isArray(rows) ? rows[0] : null;
   if (!contact?.email) return json({ error: "contact not found" }, 404);

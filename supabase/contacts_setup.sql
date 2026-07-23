@@ -44,6 +44,7 @@ revoke all on public.contacts from authenticated;
 -- 4) 必要最小限のテーブル権限を付与 ---------------------------
 grant insert on public.contacts to anon;                 -- 送信のみ
 grant select, update on public.contacts to authenticated; -- 管理者の閲覧・対応更新
+grant select, update on public.contacts to service_role;  -- Edge Function（返信送信）が宛先取得＆status更新に使用
 
 -- 5) ポリシー --------------------------------------------------
 -- (a) 匿名の INSERT：値を検証（true の全開放にはしない）
