@@ -237,6 +237,35 @@ async function deleteRecord(table, id) {
   return callAdminApi('delete', table, { id });
 }
 
+// フィルタ付きで取得（例: filter = 'contact_id=eq.5'）
+async function fetchRecordsWhere(table, filter, orderParam) {
+  const config = getConfig();
+  const headers = await baseHeaders();
+  const params = new URLSearchParams({ select: '*' });
+  if (orderParam) params.set('order', orderParam);
+  let url = `${config.url}/rest/v1/${table}?${params.toString()}`;
+  if (filter) url += `&${filter}`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`GET ${table} failed: ${res.status}`);
+  return res.json();
+}
+
+// Edge Function をログイン管理者のトークン付きで呼び出す
+async function invokeFunction(name, payload) {
+  const config = getConfig();
+  const headers = await baseHeaders();
+  const res = await fetch(`${config.url}/functions/v1/${name}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload || {})
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.error || `Function ${name} failed: ${res.status}`);
+  }
+  return body;
+}
+
 async function adminSignIn(email, password) {
   const body = await authRequest('password', { email, password });
   writeSession(body);
@@ -289,6 +318,8 @@ window.fetchRecords = fetchRecords;
 window.insertRecord = insertRecord;
 window.updateRecord = updateRecord;
 window.deleteRecord = deleteRecord;
+window.fetchRecordsWhere = fetchRecordsWhere;
+window.invokeFunction = invokeFunction;
 window.showMsg = showMsg;
 window.escapeHtml = escapeHtml;
 window.confirmDelete = confirmDelete;

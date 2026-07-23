@@ -7,6 +7,16 @@
   <title>お問い合わせ 管理 | 空と水と大地合同会社</title>
   <link rel="icon" href="../assets/images/home/smdimg.png" type="image/png">
   <link rel="stylesheet" href="admin.css">
+  <style>
+    .reply-box { margin-top: 20px; border-top: 1px solid #e5e0d5; padding-top: 16px; }
+    .reply-history { display: grid; gap: 8px; margin-top: 6px; }
+    .reply-item { background: #f3f6f1; border: 1px solid #dde6d8; border-radius: 10px; padding: 10px 12px; }
+    .reply-item__meta { font-size: 0.75rem; color: #7a8a75; margin: 0 0 4px; }
+    .reply-item__body { margin: 0; white-space: pre-wrap; line-height: 1.6; }
+    .reply-note { font-size: 0.82rem; color: #7a8a75; margin: 4px 0 8px; }
+    #contacts-reply-body { width: 100%; padding: 10px 12px; border: 1px solid #cdd6c8; border-radius: 10px; font-family: inherit; font-size: 0.95rem; line-height: 1.6; resize: vertical; box-sizing: border-box; }
+    #contacts-reply-send { margin-top: 10px; }
+  </style>
 </head>
 <body>
 
@@ -110,10 +120,24 @@
 
               <div class="form-actions">
                 <button type="submit" class="btn btn--primary">💾 対応状況を保存</button>
-                <a class="btn btn--ghost" id="contacts-reply" href="#" style="text-decoration:none;">✉ メールで返信</a>
+                <a class="btn btn--ghost" id="contacts-reply" href="#" style="text-decoration:none;">✉ メールアプリで開く</a>
                 <button type="button" class="btn btn--ghost" id="contacts-reset">選択を解除</button>
               </div>
             </form>
+
+            <div class="reply-box" id="contacts-reply-box" hidden>
+              <div class="admin-detail__label">返信履歴</div>
+              <div class="reply-history" id="contacts-reply-history">
+                <p class="record-list__empty">まだ返信はありません</p>
+              </div>
+
+              <div class="admin-detail__label" style="margin-top:16px;">お客様へメールで返信</div>
+              <p class="reply-note">入力した内容は、お客様のメールアドレス宛に送信されます（送信後は自動で「対応済み」になります）。お客様からの返信は、設定した Reply-To 宛（あなたの受信箱）に届きます。</p>
+              <textarea id="contacts-reply-body" rows="5" maxlength="5000"
+                        placeholder="返信内容を入力してください（5000文字以内）"></textarea>
+              <div id="contacts-reply-msg" class="msg"></div>
+              <button type="button" class="btn btn--primary" id="contacts-reply-send">✉ この内容でメール送信</button>
+            </div>
           </div>
         </div>
       </div>
@@ -135,6 +159,11 @@
     const formEl = document.getElementById('contacts-form');
     const detailTitle = document.getElementById('contacts-detail-title');
     const replyLink = document.getElementById('contacts-reply');
+    const replyBox = document.getElementById('contacts-reply-box');
+    const replyHistory = document.getElementById('contacts-reply-history');
+    const replyBodyInput = document.getElementById('contacts-reply-body');
+    const replyMsg = document.getElementById('contacts-reply-msg');
+    const replySendBtn = document.getElementById('contacts-reply-send');
 
     function formatDateTime(value) {
       if (!value) return '-';
@@ -213,6 +242,12 @@
         }
       }
 
+      // 返信ボックスを表示し、履歴を読み込む
+      if (replyBox) replyBox.hidden = false;
+      if (replyMsg) { replyMsg.className = 'msg'; replyMsg.textContent = ''; }
+      if (replyBodyInput) replyBodyInput.value = '';
+      loadReplies(record.id);
+
       renderList();
     }
 
@@ -222,6 +257,7 @@
       emptyState.hidden = false;
       formEl.hidden = true;
       formEl.reset();
+      if (replyBox) replyBox.hidden = true;
       renderList();
     }
 
@@ -241,6 +277,59 @@
     });
 
     document.getElementById('contacts-reset').addEventListener('click', resetDetail);
+
+    async function loadReplies(contactId) {
+      if (!replyHistory) return;
+      try {
+        const rows = await fetchRecordsWhere('contact_replies', `contact_id=eq.${encodeURIComponent(contactId)}`, 'created_at.asc');
+        renderReplies(Array.isArray(rows) ? rows : []);
+      } catch (e) {
+        renderReplies([]);
+      }
+    }
+
+    function renderReplies(rows) {
+      if (!replyHistory) return;
+      if (!rows.length) {
+        replyHistory.innerHTML = '<p class="record-list__empty">まだ返信はありません</p>';
+        return;
+      }
+      replyHistory.innerHTML = rows.map((r) => `
+        <div class="reply-item">
+          <p class="reply-item__meta">${escapeHtml(formatDateTime(r.created_at))}${r.sent_by ? '（' + escapeHtml(r.sent_by) + '）' : ''}</p>
+          <p class="reply-item__body">${escapeHtml(r.body || '')}</p>
+        </div>
+      `).join('');
+    }
+
+    if (replySendBtn) {
+      replySendBtn.addEventListener('click', async () => {
+        if (!editingId) return;
+        const text = (replyBodyInput?.value || '').trim();
+        if (!text) { showMsg(replyMsg, '返信内容を入力してください', 'error'); return; }
+        if (text.length > 5000) { showMsg(replyMsg, '返信は5000文字以内で入力してください', 'error'); return; }
+
+        replySendBtn.disabled = true;
+        const original = replySendBtn.textContent;
+        replySendBtn.textContent = '送信中...';
+        try {
+          await invokeFunction('send-contact-reply', { contact_id: editingId, body: text });
+          showMsg(replyMsg, 'メールを送信しました', 'success');
+          if (replyBodyInput) replyBodyInput.value = '';
+          await loadReplies(editingId);
+          const target = records.find((r) => r.id === editingId);
+          if (target) target.status = 'done';
+          const doneCheckbox = document.getElementById('contacts-done');
+          if (doneCheckbox) doneCheckbox.checked = true;
+          renderList();
+        } catch (e) {
+          showMsg(replyMsg, '送信エラー: ' + e.message, 'error');
+        } finally {
+          replySendBtn.disabled = false;
+          replySendBtn.textContent = original;
+        }
+      });
+    }
 
     window.adminAuthReady.then(loadList);
   </script>
