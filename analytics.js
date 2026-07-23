@@ -1,6 +1,6 @@
 (function () {
   // Set your GA4 Measurement ID before deployment.
-  var GA_MEASUREMENT_ID = 'G-V15CN709JC';
+  var GA_MEASUREMENT_ID = 'G-1TZEV5VHWG';
 
   if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') {
     return;
