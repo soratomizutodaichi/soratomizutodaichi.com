@@ -1973,6 +1973,11 @@ body.consent-modal-open {
   gap: 20px;
 }
 
+/* hidden 属性を確実に効かせる（display:grid が [hidden] を打ち消すのを防ぐ） */
+.contact-form[hidden] {
+  display: none;
+}
+
 .form-field {
   display: grid;
   gap: 8px;
