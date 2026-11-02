@@ -690,6 +690,10 @@ const scheduleSearchLogSave = (query, delayMs = 700) => {
     const hitCount = qaAllItems.filter((item) => itemMatchesTokens(item, tokens)).length;
     if (trimmed !== lastSavedQuery) {
       saveSearchLog(trimmed, hitCount);
+      // メールアドレスや電話番号らしき入力はGAに送らない
+      if (!/@|\d{4,}/.test(trimmed)) {
+        window.smdTrack?.('search', { search_term: trimmed, hit_count: hitCount });
+      }
       lastSavedQuery = trimmed;
     }
   }, delayMs);
@@ -932,6 +936,7 @@ if (contactForm) {
         message
       });
       showContactSuccess();
+      window.smdTrack?.('generate_lead', { form: 'contact', contact_category: category });
     } catch (error) {
       console.warn('Contact submission failed.', error);
       showContactAlert('送信に失敗しました。お手数ですが、時間をおいて再度お試しください。');

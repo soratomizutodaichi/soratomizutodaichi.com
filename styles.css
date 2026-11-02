@@ -252,7 +252,7 @@ button {
   inset: 0;
   background:
     linear-gradient(180deg, rgba(15, 24, 18, 0.38), rgba(15, 24, 18, 0.72)),
-    url("assets/images/home/hero.jpg") center 35%/cover no-repeat;
+    url("assets/images/home/hero.webp") center 35%/cover no-repeat;
 }
 
 .page-hero__content {
@@ -283,7 +283,7 @@ button {
   inset: 0;
   background:
     linear-gradient(180deg, rgba(15, 24, 18, 0.18), rgba(15, 24, 18, 0.74)),
-    url("assets/images/home/hero.jpg") center/cover no-repeat;
+    url("assets/images/home/hero.webp") center/cover no-repeat;
   transform: scale(1.04);
 }
 
@@ -561,7 +561,7 @@ button {
   align-items: center;
   background:
     linear-gradient(90deg, rgba(11, 26, 20, 0.74) 0%, rgba(11, 26, 20, 0.56) 40%, rgba(11, 26, 20, 0.2) 72%, rgba(11, 26, 20, 0.1) 100%),
-    url("assets/images/home/satoyamaA.png") center/cover no-repeat;
+    url("assets/images/home/satoyamaA.webp") center/cover no-repeat;
   box-shadow: var(--shadow);
 }
 
@@ -1357,7 +1357,7 @@ mark.qa-highlight {
 .page-hero--farm .page-hero__backdrop {
   background:
     linear-gradient(180deg, rgba(17, 28, 20, 0.42), rgba(17, 28, 20, 0.72)),
-    url("assets/images/farm/yuuhi1.png") center 42%/cover no-repeat;
+    url("assets/images/farm/yuuhi1.webp") center 42%/cover no-repeat;
 }
 
 .farm-intro {
@@ -1785,7 +1785,7 @@ body.consent-modal-open {
     min-height: 390px;
     background:
       linear-gradient(180deg, rgba(11, 26, 20, 0.76) 0%, rgba(11, 26, 20, 0.5) 52%, rgba(11, 26, 20, 0.3) 100%),
-      url("assets/images/home/satoyamaA.png") center/cover no-repeat;
+      url("assets/images/home/satoyamaA.webp") center/cover no-repeat;
   }
 
   .message-band__overlay {
@@ -1901,7 +1901,7 @@ body.consent-modal-open {
 .page-hero--contact .page-hero__backdrop {
   background:
     linear-gradient(180deg, rgba(15, 24, 18, 0.42), rgba(15, 24, 18, 0.74)),
-    url("assets/images/home/hero.jpg") center 40%/cover no-repeat;
+    url("assets/images/home/hero.webp") center 40%/cover no-repeat;
 }
 
 .contact__layout {
@@ -2199,4 +2199,29 @@ body.consent-modal-open {
   .contact__layout {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── プライバシーポリシー */
+.policy {
+  max-width: 860px;
+}
+
+.policy h2 {
+  margin: 2.4em 0 0.6em;
+  font-size: 1.25rem;
+}
+
+.policy p,
+.policy li {
+  line-height: 1.9;
+}
+
+.policy ul {
+  padding-left: 1.4em;
+}
+
+.policy__date {
+  margin-top: 2.4em;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
